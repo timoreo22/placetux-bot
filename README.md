@@ -6,7 +6,7 @@
 
 ## About
 
-This is a script to draw an image onto r/place (<https://www.reddit.com/r/place/>).
+This is a script to draw the offical TUX onto r/place (<https://www.reddit.com/r/place/>).
 
 ## Features
 
@@ -64,7 +64,7 @@ Edit the values to replace with actual credentials and values
   //Where the image's path is
   "image_path":"image.png",
   // [x,y] where you want the top left pixel of the local image to be drawn on canvas
-  "image_start_coords": [741, 610],
+  "image_start_coords": [20, 679],
   // delay between starting threads (can be 0)
   "thread_delay": 2,
   // array of accounts to use
@@ -96,7 +96,7 @@ Edit the values to replace with actual credentials and values
 
 ### Notes
 
-- Change image.jpg/png to specify what image to draw. One pixel is drawn every 5 minutes. PNG takes priority over JPG.
+Note: Multiple fields can be passed into the arrays to spawn a thread for each one.
 
 ## Run the Script
 
@@ -110,8 +110,7 @@ Just create multiple child arrays to "workers" in the .json
 
 ```json
 {
-  "image_path":"image.png",
-  "image_start_coords": [741, 610],
+  "image_start_coords": [20, 679],
   "thread_delay": 2,
 
   "workers": {
@@ -164,5 +163,5 @@ You can now run with
 
 
 ## Developing
-
-The nox CI job will run flake8 and black on the code. You can also do this locally by pip installing nox on your system and running `nox` in the repository directory.
+The nox CI job will run flake8 on the code. You can also do this locally by pip installing nox on your system and running 
+`nox` in the repository directory.

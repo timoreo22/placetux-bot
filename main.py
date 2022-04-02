@@ -8,13 +8,15 @@ import json
 import time
 import threading
 import logging
+import sys
+import shutil
 import colorama
 import argparse
 from io import BytesIO
 from websocket import create_connection
 from requests.auth import HTTPBasicAuth
 from PIL import ImageColor
-from PIL import Image, UnidentifiedImageError
+from PIL import Image
 import random
 
 from mappings import color_map, name_map
@@ -39,11 +41,6 @@ class PlaceClient:
             else 3
         )
 
-        self.unverified_place_frequency = (
-            self.json_data["unverified_place_frequency"]
-            if self.json_data["unverified_place_frequency"] is not None
-            else False
-        )
 
         # Color palette
         self.rgb_colors_array = self.generate_rgb_colors_array()
@@ -55,7 +52,6 @@ class PlaceClient:
         # Image information
         self.pix = None
         self.image_size = None
-        self.image_path = self.json_data["image_path"]
         self.first_run_counter = 0
 
         # Initialize-functions
@@ -76,7 +72,7 @@ class PlaceClient:
     # Find the closest rgb color from palette to a target rgb color
 
     def closest_color(self, target_rgb):
-        r, g, b = target_rgb
+        r, g, b = target_rgb[0:3]
         color_diffs = []
         for color in self.rgb_colors_array:
             cr, cg, cb = color
@@ -105,14 +101,26 @@ class PlaceClient:
     # Read the input image.jpg file
 
     def load_image(self):
-        # Read and load the image to draw and get its dimensions
-        try:
-            im = Image.open(self.image_path)
-        except FileNotFoundError:
-            logging.fatal("Failed to load image")
-            exit()
-        except UnidentifiedImageError:
-            logging.fatal("File found, but couldn't identify image format")
+        image_path = os.path.join(
+        os.path.abspath(os.getcwd()), "GloriousOfficialFinal52x80FlatTux.png")
+
+
+        res = requests.get(
+            "https://github.com/r-PlaceTux/place_tux/raw/main/GloriousOfficialFinal52x80FlatTux.png",
+            stream=True,
+        )
+        if res.status_code == 200:
+            with open(image_path, "wb") as f:
+                shutil.copyfileobj(res.raw, f)
+                logging.info("Sucessfully updated image.")
+        else:
+            logging.warn("Unable to update image")
+
+        if image_path is None:
+            sys.exit("No valid image path found!")
+
+        print("Loading image from " + image_path)
+        im = Image.open(image_path)
         self.pix = im.load()
         logging.info(f"Loaded image size: {im.size}")
         self.image_size = im.size
@@ -360,10 +368,8 @@ class PlaceClient:
 
             # note: Reddit limits us to place 1 pixel every 5 minutes, so I am setting it to
             # 5 minutes and 30 seconds per pixel
-            if self.unverified_place_frequency:
-                pixel_place_frequency = 1230
-            else:
-                pixel_place_frequency = 330
+
+            pixel_place_frequency = 0
 
             next_pixel_placement_time = math.floor(time.time()) + pixel_place_frequency
 
@@ -390,14 +396,12 @@ class PlaceClient:
 
                 # log next time until drawing
                 time_until_next_draw = next_pixel_placement_time - current_timestamp
-
                 new_update_str = (
-                    f"{time_until_next_draw} seconds until next pixel is drawn"
+                    str(time_until_next_draw) + " seconds until next pixel is drawn"
                 )
                 if update_str != new_update_str and time_until_next_draw % 10 == 0:
                     update_str = new_update_str
-
-                logging.info(f"Thread #{index} :: {update_str}")
+                    logging.info(f"Thread #{index} :: {update_str}")
 
                 # refresh access token if necessary
                 # print("TEST:", self.access_token_expires_at_timestamp, "INDEX:", index)
