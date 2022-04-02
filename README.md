@@ -49,6 +49,10 @@ pip install -r requirements.txt
 pip3 install -r requirements.txt
 ```
 
+### MacOSX
+If you are using MacOSX and encounter an SSL_CERTIFICATE error. Please apply the fix detailed https://stackoverflow.com/questions/42098126/mac-osx-python-ssl-sslerror-ssl-certificate-verify-failed-certificate-verify  
+
+
 ## Get Started
 
 Move the file 'config_example.json' to config.json
@@ -132,15 +136,31 @@ This is useful if you want different threads drawing different parts of the imag
 
 ## Other Settings
 
+If any JSON decoders errors are found, the `config.json` needs a fix. Make sure to add the below 2 lines in the file.
+
 ```text
 {
     "thread_delay": 2,
-    "unverified_place_frequency": False,
+    "unverified_place_frequency": false,
 }
 ```
 
 - thread_delay - Adds a delay between starting a new thread. Can be used to avoid ratelimiting
 - unverified_place_frequency - Sets the pixel place frequency to the unverified account limit
+
+- Transparency can be achieved by using the RGB value (69, 42, 0) in any part of your image
+- If you'd like, you can enable Verbose Mode by adding --verbose to "python main.py". This will output a lot more information, and not neccessarily in the right order, but it is useful for development and debugging.
+
+## Docker
+
+A dockerfile is provided. Instructions on installing docker are outside the scope of this guide.
+
+To build: After editing your config.json, run `docker build . -t place-bot`. and wait for the image to build
+
+You can now run with 
+
+`docker run place-bot`
+
 
 ## Developing
 The nox CI job will run flake8 on the code. You can also do this locally by pip installing nox on your system and running 
