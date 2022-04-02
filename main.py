@@ -290,6 +290,7 @@ class PlaceClient:
                 if temp["type"] == "data":
                     msg = temp["payload"]["data"]["subscribe"]
                     if msg["data"]["__typename"] == "FullFrameMessageData":
+                        file=msg["data"]["name"]
                         if not temp["id"] in already_added:
                             imgs.append(
                                 Image.open(
