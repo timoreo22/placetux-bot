@@ -41,7 +41,6 @@ class PlaceClient:
             else 3
         )
 
-
         # Color palette
         self.rgb_colors_array = self.generate_rgb_colors_array()
 
@@ -102,8 +101,8 @@ class PlaceClient:
 
     def load_image(self):
         image_path = os.path.join(
-        os.path.abspath(os.getcwd()), "GloriousOfficialFinal52x80FlatTux.png")
-
+            os.path.abspath(os.getcwd()), "GloriousOfficialFinal52x80FlatTux.png"
+        )
 
         res = requests.get(
             "https://github.com/r-PlaceTux/place_tux/raw/main/GloriousOfficialFinal52x80FlatTux.png",
