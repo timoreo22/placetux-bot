@@ -227,7 +227,9 @@ class PlaceClient:
                 response.json()["errors"][0]["extensions"]["nextAvailablePixelTs"]
             )
             logger.error(
-                "Thread #{} : Failed placing pixel: rate limited, retrying in {} seconds", thread_index, math.floor(((waitTime/1000)-time.time()))
+                "Thread #{} : Failed placing pixel: rate limited, retrying in {} seconds",
+                thread_index,
+                math.floor(((waitTime / 1000) - time.time())),
             )
         else:
             waitTime = math.floor(
@@ -703,7 +705,11 @@ def main(debug: bool, config: str):
     if not debug:
         # default loguru level is DEBUG
         logger.remove()
-        logger.add(sys.stderr, level="INFO", format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> <level>{level}</level> - <level>{message}</level>")
+        logger.add(
+            sys.stderr,
+            level="INFO",
+            format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> <level>{level}</level> - <level>{message}</level>",
+        )
 
     client = PlaceClient(config_path=config)
     # Start everything
