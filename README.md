@@ -33,23 +33,8 @@ Steps:
 
 <img width="383" alt="App ID Screenshot" src="https://user-images.githubusercontent.com/19873803/161398668-0705f122-51d3-4785-8bd9-d6700b586634.png">
 
-## Python Package Requirements
 
-Install requirements from 'requirements.txt' file.
-
-### Windows
-
-```shell
-pip install -r requirements.txt
-```
-
-### Other OS
-
-```shell
-pip3 install -r requirements.txt
-```
-
-### MacOSX
+## MacOSX
 If you are using MacOSX and encounter an SSL_CERTIFICATE error. Please apply the fix detailed https://stackoverflow.com/questions/42098126/mac-osx-python-ssl-sslerror-ssl-certificate-verify-failed-certificate-verify  
 
 
@@ -58,6 +43,8 @@ If you are using MacOSX and encounter an SSL_CERTIFICATE error. Please apply the
 Move the file 'config_example.json' to config.json
 
 Edit the values to replace with actual credentials and values
+
+Note: Please use https://jsonlint.com/ to check that your JSON file is correctly formatted
 
 ```json
 {
@@ -100,9 +87,22 @@ Note: Multiple fields can be passed into the arrays to spawn a thread for each o
 
 ## Run the Script
 
-```python
-python3 main.py
+### Windows
+
+```shell
+start.bat or startverbose.bat
 ```
+
+### Other OS
+
+```shell
+chmod +x start.sh startverbose.sh
+./start.sh or ./startverbose.sh
+```
+
+### You can get more logs (`DEBUG`) by running the script with `-d` flag
+
+`python3 main.py -d` or `python3 main.py --debug`
 
 ## Multiple Workers
 
