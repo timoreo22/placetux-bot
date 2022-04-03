@@ -422,7 +422,7 @@ class PlaceClient:
             # Time until next pixel is drawn
             update_str = ""
 
-            seconds_between_update_checks = 10
+            seconds_between_update_checks = 180
             seconds_till_next_update_check = seconds_between_update_checks
 
             # Refresh auth tokens and / or draw a pixel
