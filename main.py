@@ -388,7 +388,6 @@ class PlaceClient:
             logger.debug("Adding image: {}", img)
             dx_offset = int(canvas_details["canvasConfigurations"][idx]["dx"])
             new_img.paste(img, (dx_offset, 0))
-
         return new_img
 
     def get_unset_pixel(self, boardimg, x, y, index):
@@ -466,19 +465,10 @@ class PlaceClient:
             # Time until next pixel is drawn
             update_str = ""
 
-            seconds_between_update_checks = 180
-            seconds_till_next_update_check = seconds_between_update_checks
-
             # Refresh auth tokens and / or draw a pixel
             while True:
                 # reduce CPU usage
                 time.sleep(1)
-
-                # doing an update check if seconds_till_next_update_check is less than 0
-                seconds_till_next_update_check -= 1
-                if seconds_till_next_update_check < 0:
-                    seconds_till_next_update_check = seconds_between_update_checks
-                    self.check_for_update()
 
                 # get the current time
                 current_timestamp = math.floor(time.time())
@@ -682,6 +672,10 @@ def main(debug: bool, config: str):
     client = PlaceClient(config_path=config)
     # Start everything
     client.start()
+    # Start checking for image update
+    while True:
+        time.sleep(180)
+        client.check_for_update()
 
 
 if __name__ == "__main__":
