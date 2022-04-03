@@ -416,7 +416,7 @@ class PlaceClient:
             )
 
             target_rgb = self.pix[x, y][:3]
-            is_transparent = self.pix[x, y][4] == 255
+            is_transparent = self.pix[x, y][3] == 0
 
             new_rgb = self.closest_color(target_rgb)
             if pix2[x + self.pixel_x_start, y + self.pixel_y_start] != new_rgb:
