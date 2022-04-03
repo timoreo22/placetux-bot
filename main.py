@@ -142,7 +142,7 @@ class PlaceClient:
     # Read the input image.jpg file
 
     def check_for_update(self):
-        logging.info("Running an update check")
+        logger.info("Running an update check")
 
         remote_hash_req = requests.get(self.image_hash_url)
         remote_hash = remote_hash_req.content
@@ -151,17 +151,17 @@ class PlaceClient:
 
         if self.image_hash == remote_hash:
             # The hashes match, meaning the bot is up to date and we can return
-            logging.info("The bot source image is up to date")
+            logger.info("The bot source image is up to date")
             return
 
-        logging.info("The bot source image is out of date, updating")
+        logger.info("The bot source image is out of date, updating")
 
         # The hashes don't match, meaning the bot is out of date
         if self.update_image():
             self.load_image()
 
     def update_image(self) -> bool:
-        logging.info("Starting an image update")
+        logger.info("Starting an image update")
 
         remote_hash_req = requests.get(self.image_hash_url)
         remote_hash = remote_hash_req.content
@@ -169,14 +169,14 @@ class PlaceClient:
         remote_image_req = requests.get(self.image_url, stream=True)
 
         if remote_image_req.status_code != 200:
-            logging.warning("Failed to update bot source image")
+            logger.warning("Failed to update bot source image")
             # Returning if the response fails
             return False
 
         with open(self.image_path, "wb") as f:
             shutil.copyfileobj(remote_image_req.raw, f)
 
-        logging.info("Bot source image updated")
+        logger.info("Bot source image updated")
 
         # Updating the hash so the auto updater doesn't get confused
         self.image_hash = remote_hash
@@ -399,7 +399,7 @@ class PlaceClient:
                 x = 0
 
             if y >= self.image_size[1]:
-                logging.info(
+                logger.info(
                     "Thread #{} : All pixels correct, trying again in 10 seconds... ",
                     index,
                 )
