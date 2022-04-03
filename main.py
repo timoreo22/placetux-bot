@@ -3,7 +3,6 @@
 import os
 import os.path
 import math
-import subprocess
 
 import requests
 import json
