@@ -147,3 +147,7 @@ You can now run with
 ## Developing
 The nox CI job will run flake8 on the code. You can also do this locally by pip installing nox on your system and running 
 `nox` in the repository directory.
+
+## Contributing
+
+See the [Contributing Guide](docs/CONTRIBUTING.md)
