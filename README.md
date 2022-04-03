@@ -69,7 +69,8 @@ Note: Please use https://jsonlint.com/ to check that your JSON file is correctly
 
 ### Notes
 
-Note: Multiple fields can be passed into the arrays to spawn a thread for each one.
+-  Multiple fields can be passed into the arrays to spawn a thread for each one.
+- If you use 2 factor authentication (2FA) in your account, then change "password" to "password:XXXXXX" where XXXXXX is your 2FA code.
 
 ## Run the Script
 
