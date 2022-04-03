@@ -416,6 +416,7 @@ class PlaceClient:
             )
 
             target_rgb = self.pix[x, y][:3]
+            is_transparent = self.pix[x, y][4] == 255
 
             new_rgb = self.closest_color(target_rgb)
             if pix2[x + self.pixel_x_start, y + self.pixel_y_start] != new_rgb:
@@ -423,10 +424,10 @@ class PlaceClient:
                     "{}, {}, {}, {}",
                     pix2[x + self.pixel_x_start, y + self.pixel_y_start],
                     new_rgb,
-                    target_rgb != (69, 42, 0),
+                    is_transparent,
                     pix2[x, y] != new_rgb,
                 )
-                if target_rgb != (69, 42, 0):
+                if not is_transparent:
                     logger.debug(
                         "Thread #{} : Replacing {} pixel at: {},{} with {} color",
                         index,
@@ -436,8 +437,6 @@ class PlaceClient:
                         new_rgb,
                     )
                     break
-                else:
-                    logger.info("TransparrentPixel")
             x += 1
         return x, y, new_rgb
 
