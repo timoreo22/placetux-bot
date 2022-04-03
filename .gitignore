@@ -158,3 +158,6 @@ fabric.properties
 
 #VSCODE
 .vscode/
+
+# This will be downloaded from the internet
+image.png 

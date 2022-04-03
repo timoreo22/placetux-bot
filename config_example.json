@@ -2,6 +2,8 @@
     "image_start_coords": [20, 679],
     "thread_delay": 2,
     "unverified_place_frequency": "False",
+    "image_url": "https://raw.githubusercontent.com/r-PlaceTux/place_tux/main/.build/tux_raw.png",
+    "image_hash_url": "https://raw.githubusercontent.com/r-PlaceTux/place_tux/main/.build/bot_hash",
     "workers": {
         "worker1username": {
             "password": "password",

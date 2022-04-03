@@ -53,8 +53,18 @@ class PlaceClient:
         self.image_size = None
         self.first_run_counter = 0
 
+        # Setting some values from config
+        self.image_url = self.json_data["image_url"]
+        self.image_hash_url = self.json_data["image_hash_url"]
+
+        # Setting the local path for the image
+        self.image_path = os.path.join(os.path.abspath(os.getcwd()), "image.png")
+
+        self.image_hash = None
+
         # Initialize-functions
-        self.load_image()
+        self.update_image() # Download the new version
+        self.load_image() # Load the image
 
     """ Utils """
     # Convert rgb tuple to hexadecimal string
@@ -99,27 +109,51 @@ class PlaceClient:
 
     # Read the input image.jpg file
 
+    def check_for_update(self):
+        logging.info("Running an update check")
+
+        remote_hash_req = requests.get(self.image_hash_url)
+        remote_hash = remote_hash_req.content
+
+        print("Local: ", self.image_hash, " - Remote: ", remote_hash)
+
+        if self.image_hash == remote_hash:
+            # The hashes match, meaning the bot is up to date and we can return
+            logging.info("The bot source image is up to date")
+            return
+
+        logging.info("The bot source image is out of date, updating")
+
+        # The hashes don't match, meaning the bot is out of date
+        if self.update_image():
+            self.load_image()
+
+    def update_image(self) -> bool:
+        remote_hash_req = requests.get(self.image_hash_url)
+        remote_hash = remote_hash_req.content
+
+        remote_image_req = requests.get(self.image_url, stream=True)
+
+        if remote_image_req.status_code != 200:
+            logging.warn("Failed to update bot source image")
+            # Returning if the response fails
+            return False
+        
+        with open(self.image_path, "wb") as f:
+            shutil.copyfileobj(remote_image_req.raw, f)
+
+        logging.info("Bot source image updated")
+
+        # Updating the hash so the auto updater doesn't get confused
+        self.image_hash = remote_hash
+        return True
+
     def load_image(self):
-        image_path = os.path.join(
-            os.path.abspath(os.getcwd()), "GloriousOfficialFinal52x80FlatTux.png"
-        )
-
-        res = requests.get(
-            "https://github.com/r-PlaceTux/place_tux/raw/main/GloriousOfficialFinal52x80FlatTux.png",
-            stream=True,
-        )
-        if res.status_code == 200:
-            with open(image_path, "wb") as f:
-                shutil.copyfileobj(res.raw, f)
-                logging.info("Sucessfully updated image.")
-        else:
-            logging.warn("Unable to update image")
-
-        if image_path is None:
+        if self.image_path is None:
             sys.exit("No valid image path found!")
 
-        print("Loading image from " + image_path)
-        im = Image.open(image_path)
+        print("Loading image from " + self.image_path)
+        im = Image.open(self.image_path)
         self.pix = im.load()
         logging.info(f"Loaded image size: {im.size}")
         self.image_size = im.size
@@ -388,10 +422,19 @@ class PlaceClient:
             # Time until next pixel is drawn
             update_str = ""
 
+            seconds_between_update_checks = 10
+            seconds_till_next_update_check = seconds_between_update_checks
+
             # Refresh auth tokens and / or draw a pixel
             while True:
                 # reduce CPU usage
                 time.sleep(1)
+
+                # doing an update check if seconds_till_next_update_check is less than 0
+                seconds_till_next_update_check -= 1
+                if seconds_till_next_update_check < 0:
+                    seconds_till_next_update_check = seconds_between_update_checks
+                    self.check_for_update()
 
                 # get the current time
                 current_timestamp = math.floor(time.time())
