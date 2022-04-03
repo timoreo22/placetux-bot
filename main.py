@@ -111,19 +111,19 @@ class PlaceClient:
     # Read the input image.jpg file
 
     def check_for_update(self):
-        logger.info("Running an update check")
+        logger.debug("Running an update check")
 
         remote_hash_req = requests.get(self.image_hash_url)
         remote_hash = remote_hash_req.content
 
-        print("Local: ", self.image_hash, " - Remote: ", remote_hash)
+        logger.debug("Local Hash: {} - Remote Hash: {}", self.image_hash, remote_hash)
 
         if self.image_hash == remote_hash:
             # The hashes match, meaning the bot is up to date and we can return
-            logger.info("The bot source image is up to date")
+            logger.debug("The bot source image is up to date")
             return
 
-        logger.info("The bot source image is out of date, updating")
+        logger.info("The bot source image is out of date, updating!")
 
         # The hashes don't match, meaning the bot is out of date
         if self.update_image():
