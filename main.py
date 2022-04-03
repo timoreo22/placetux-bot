@@ -583,8 +583,8 @@ class PlaceClient:
                         logger.exception("Authorization failed!")
                         return
                     else:
-                        print("Authorization successful!")
-                    print("Obtaining access token...")
+                        logger.success("Authorization successful!")
+                    logger.debug("Obtaining access token...")
                     r = client.get("https://new.reddit.com/")
                     data_str = (
                         BeautifulSoup(r.content, features="html.parser")
@@ -595,11 +595,13 @@ class PlaceClient:
                     response_data = data["user"]["session"]
 
                     if "error" in response_data:
-                        logger.info(
+                        logger.exception(
                             "An error occured. Make sure you have the correct credentials. Response data: {}",
                             response_data,
                         )
                         exit(1)
+                    else:
+                        logger.debug("Succesfully obtained access token")
 
                     self.access_tokens[index] = response_data["accessToken"]
                     # access_token_type = data["user"]["session"]["accessToken"]  # this is just "bearer"
