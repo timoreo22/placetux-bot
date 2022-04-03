@@ -129,13 +129,15 @@ class PlaceClient:
             self.load_image()
 
     def update_image(self) -> bool:
+        logging.info("Starting an image update")
+
         remote_hash_req = requests.get(self.image_hash_url)
         remote_hash = remote_hash_req.content
 
         remote_image_req = requests.get(self.image_url, stream=True)
 
         if remote_image_req.status_code != 200:
-            logging.warn("Failed to update bot source image")
+            logging.warning("Failed to update bot source image")
             # Returning if the response fails
             return False
 
@@ -152,7 +154,7 @@ class PlaceClient:
         if self.image_path is None:
             sys.exit("No valid image path found!")
 
-        print("Loading image from " + self.image_path)
+        logging.info("Loading image from " + self.image_path)
         im = Image.open(self.image_path)
         self.pix = im.load()
         logging.info(f"Loaded image size: {im.size}")
