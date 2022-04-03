@@ -555,7 +555,7 @@ class PlaceClient:
                     else:
                         print("Authorization successful!")
                     print("Obtaining access token...")
-                    r = client.get("https://www.reddit.com/")
+                    r = client.get("https://new.reddit.com/")
                     data_str = (
                         BeautifulSoup(r.content, features="html.parser")
                         .find("script", {"id": "data"})
