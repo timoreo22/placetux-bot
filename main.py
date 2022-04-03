@@ -22,41 +22,37 @@ from mappings import color_map, name_map
 
 
 class PlaceClient:
-    def __init__(self):
+    def __init__(self, config_path):
         # Data
-        self.json_data = self.get_json_data()
+        self.json_data = self.get_json_data(config_path)
         self.pixel_x_start: int = self.json_data["image_start_coords"][0]
         self.pixel_y_start: int = self.json_data["image_start_coords"][1]
 
         # In seconds
-        try:
-            self.delay_between_launches = (
-                self.json_data["thread_delay"]
-                if self.json_data["thread_delay"] is not None
-                else 3
-            )
-
-            self.unverified_place_frequency = (
-                self.json_data["unverified_place_frequency"]
-                if self.json_data["unverified_place_frequency"] is not None
-                else False
-            )
-            self.proxies = (
-                self.GetProxies(self.json_data["proxies"])
-                if "proxies" in self.json_data
-                else None
-            )
-
-            self.compactlogging = (
-                self.json_data["compacy_logging"]
-                if "compacy_logging" in self.json_data
-                else True
-            )
-        except Exception:
-            logger.error(
-                "Failed setting options from json. Please read README and check if you have everything in correctly. If issues are still happening then create a issue"
-            )
-            exit()
+        self.delay_between_launches = (
+            self.json_data["thread_delay"]
+            if "thread_delay" in self.json_data and
+            self.json_data["thread_delay"] is not None
+            else 3
+        )
+        self.unverified_place_frequency = (
+            self.json_data["unverified_place_frequency"]
+            if "unverified_place_frequency" in self.json_data and
+            self.json_data["unverified_place_frequency"] is not None
+            else False
+        )
+        self.proxies = (
+            self.GetProxies(self.json_data["proxies"])
+            if "proxies" in self.json_data and
+            self.json_data["proxies"] is not None
+            else None
+        )
+        self.compactlogging = (
+            self.json_data["compact_logging"]
+            if "compact_logging" in self.json_data and
+            self.json_data["compact_logging"] is not None
+            else True
+        )
 
         # Color palette
         self.rgb_colors_array = self.generate_rgb_colors_array()
@@ -100,7 +96,7 @@ class PlaceClient:
     def GetProxies(self, proxies):
         proxieslist = []
         for i in proxies:
-            proxieslist[len(proxieslist)] = {"https": i}
+            proxieslist.append({"https": i})
         return proxieslist
 
     def GetRandomProxy(self):
@@ -125,8 +121,8 @@ class PlaceClient:
             ImageColor.getcolor(color_hex, "RGB") for color_hex, _i in color_map.items()
         ]
 
-    def get_json_data(self):
-        configFilePath = os.path.join(os.getcwd(), "config.json")
+    def get_json_data(self, config_path):
+        configFilePath = os.path.join(os.getcwd(), config_path)
 
         if not os.path.exists(configFilePath):
             exit("No config.json file found. Read the README")
@@ -246,9 +242,7 @@ class PlaceClient:
             waitTime = math.floor(
                 response.json()["errors"][0]["extensions"]["nextAvailablePixelTs"]
             )
-            logger.error(
-                "Thread #{} : Failed placing pixel: rate limited", thread_index
-            )
+            logger.error("Thread #{} : Failed placing pixel: rate limited", thread_index)
         else:
             waitTime = math.floor(
                 response.json()["data"]["act"]["data"][0]["data"][
@@ -266,7 +260,7 @@ class PlaceClient:
         return waitTime / 1000
 
     def get_board(self, access_token_in):
-        logger.info("Getting board")
+        logger.debug("Connecting and obtaining board images")
         ws = create_connection(
             "wss://gql-realtime-2.reddit.com/query",
             origin="https://hot-potato.reddit.com",
@@ -279,7 +273,15 @@ class PlaceClient:
                 }
             )
         )
-        ws.recv()
+        while True:
+            msg = ws.recv()
+            if msg is None:
+                logger.error("Reddit failed to acknowledge connection_init")
+                exit()
+            if msg.startswith('{"type":"connection_ack"}'):
+                logger.debug("Connected to WebSocket server")
+                break
+        logger.debug("Obtaining Canvas information")
         ws.send(
             json.dumps(
                 {
@@ -301,37 +303,22 @@ class PlaceClient:
                 }
             )
         )
-        ws.recv()
-        ws.send(
-            json.dumps(
-                {
-                    "id": "2",
-                    "type": "start",
-                    "payload": {
-                        "variables": {
-                            "input": {
-                                "channel": {
-                                    "teamOwner": "AFD2022",
-                                    "category": "CANVAS",
-                                    "tag": "0",
-                                }
-                            }
-                        },
-                        "extensions": {},
-                        "operationName": "replace",
-                        "query": "subscription replace($input: SubscribeInput!) {\n  subscribe(input: $input) {\n    id\n    ... on BasicMessage {\n      data {\n        __typename\n        ... on FullFrameMessageData {\n          __typename\n          name\n          timestamp\n        }\n        ... on DiffFrameMessageData {\n          __typename\n          name\n          currentTimestamp\n          previousTimestamp\n        }\n      }\n      __typename\n    }\n    __typename\n  }\n}\n",
-                    },
-                }
-            )
-        )
-        ws.recv()
 
-        image_sizex = 2
-        image_sizey = 1
+        while True:
+            canvas_payload = json.loads(ws.recv())
+            if canvas_payload["type"] == "data":
+                canvas_details = canvas_payload["payload"]["data"]["subscribe"]["data"]
+                logger.debug("Canvas config: {}", canvas_payload)
+                break
 
-        imgs = []
-        already_added = []
-        for i in range(1, image_sizex * image_sizey + 1):
+        canvas_sockets = []
+
+        canvas_count = len(canvas_details["canvasConfigurations"])
+
+        for i in range(0, canvas_count):
+            canvas_sockets.append(2 + i)
+            logger.debug("Creating canvas socket {}", canvas_sockets[i])
+
             ws.send(
                 json.dumps(
                     {
@@ -354,40 +341,53 @@ class PlaceClient:
                     }
                 )
             )
-            ws.recv()
-            while True:
-                temp = json.loads(ws.recv())
-                if temp["type"] == "data":
-                    msg = temp["payload"]["data"]["subscribe"]
-                    if msg["data"]["__typename"] == "FullFrameMessageData":
-                        file = msg["data"]["name"]
-                        if not temp["id"] in already_added:
-                            imgs.append(
-                                Image.open(
-                                    BytesIO(
-                                        requests.get(
-                                            msg["data"]["name"],
-                                            stream=True,
-                                            proxies=self.GetRandomProxy(),
-                                        ).content
-                                    )
+
+        imgs = []
+        logger.debug("A total of {} canvas sockets opened", len(canvas_sockets))
+        while len(canvas_sockets) > 0:
+            temp = json.loads(ws.recv())
+            logger.debug("Waiting for WebSocket message")
+            if temp["type"] == "data":
+                logger.debug("Received WebSocket data type message")
+                msg = temp["payload"]["data"]["subscribe"]
+                if msg["data"]["__typename"] == "FullFrameMessageData":
+                    logger.debug("Received full frame message")
+                    img_id = int(temp["id"])
+                    logger.debug("Image ID: {}", img_id)
+                    if img_id in canvas_sockets:
+                        logger.debug("Getting image: {}", msg["data"]["name"])
+                        imgs.append(
+                            Image.open(
+                                BytesIO(
+                                    requests.get(
+                                        msg["data"]["name"], stream=True
+                                    ).content
                                 )
                             )
-                            already_added.append(temp["id"])
-                        break
+                        )
+                        canvas_sockets.remove(img_id)
+                        logger.debug(
+                            "Canvas sockets remaining: {}", len(canvas_sockets)
+                        )
+
+        for i in range(0, canvas_count - 1):
             ws.send(json.dumps({"id": str(2 + i), "type": "stop"}))
 
         ws.close()
 
-        new_img = Image.new("RGB", (1000 * 2, 1000))
+        # TODO: Multiply by canvas_details["canvasConfigurations"][i]["dx"] and canvas_details["canvasConfigurations"][i]["dy"] instead of hardcoding it
+        new_img_width = int(canvas_details["canvasWidth"]) * 2
+        logger.debug("New image width: {}", new_img_width)
+        new_img_height = int(canvas_details["canvasHeight"])
+        logger.debug("New image height: {}", new_img_height)
 
-        x_offset = 0
-        for img in imgs:
-            new_img.paste(img, (x_offset, 0))
-            x_offset += img.size[0]
+        new_img = Image.new("RGB", (new_img_width, new_img_height))
+        dx_offset = 0
+        for idx, img in enumerate(imgs):
+            logger.debug("Adding image: {}", img)
+            dx_offset = int(canvas_details["canvasConfigurations"][idx]["dx"])
+            new_img.paste(img, (dx_offset, 0))
 
-        logger.info("Got image.")
-        # new_img.show()
         return new_img
 
     def get_unset_pixel(self, boardimg, x, y, index):
@@ -505,15 +505,14 @@ class PlaceClient:
 
                 # refresh access token if necessary
                 if (
-                    len(self.access_tokens) == 0
-                    or len(self.access_token_expires_at_timestamp) == 0
-                    or
+                    len(self.access_tokens) == 0 or
+                    len(self.access_token_expires_at_timestamp) == 0 or
                     # index in self.access_tokens
-                    index not in self.access_token_expires_at_timestamp
-                    or (
+                    index not in self.access_token_expires_at_timestamp or
+                    (
+                        self.access_token_expires_at_timestamp.get(index) and
+                        current_timestamp >=
                         self.access_token_expires_at_timestamp.get(index)
-                        and current_timestamp
-                        >= self.access_token_expires_at_timestamp.get(index)
                     )
                 ):
                     if not self.compactlogging:
@@ -559,7 +558,7 @@ class PlaceClient:
                     data_str = (
                         BeautifulSoup(r.content, features="html.parser")
                         .find("script", {"id": "data"})
-                        .contents[0][len("window.__r = ") : -1]
+                        .contents[0][len("window.__r = "): -1]
                     )
                     data = json.loads(data_str)
                     response_data = data["user"]["session"]
@@ -590,8 +589,8 @@ class PlaceClient:
 
                 # draw pixel onto screen
                 if self.access_tokens.get(index) is not None and (
-                    current_timestamp >= next_pixel_placement_time
-                    or self.first_run_counter <= index
+                    current_timestamp >= next_pixel_placement_time or
+                    self.first_run_counter <= index
                 ):
 
                     # place pixel immediately
@@ -631,7 +630,7 @@ class PlaceClient:
                         pixel_y_start,
                         pixel_color_index,
                         canvas,
-                        index,
+                        index
                     )
 
                     current_r += 1
@@ -666,14 +665,20 @@ class PlaceClient:
     is_flag=True,
     help="Enable debug mode. Prints debug messages to the console.",
 )
-def main(debug: bool):
+@click.option(
+    "-c",
+    "--config",
+    default="config.json",
+    help="Location of config.json",
+)
+def main(debug: bool, config: str):
 
     if not debug:
         # default loguru level is DEBUG
         logger.remove()
         logger.add(sys.stderr, level="INFO")
 
-    client = PlaceClient()
+    client = PlaceClient(config_path=config)
     # Start everything
     client.start()
 
