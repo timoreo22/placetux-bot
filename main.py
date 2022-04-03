@@ -242,7 +242,7 @@ class PlaceClient:
                 response.json()["errors"][0]["extensions"]["nextAvailablePixelTs"]
             )
             logger.error(
-                "Thread #{} : Failed placing pixel: rate limited", thread_index
+                "Thread #{} : Failed placing pixel: rate limited, retrying in {} seconds", thread_index, math.floor(((waitTime/1000)-time.time()))
             )
         else:
             waitTime = math.floor(
@@ -613,7 +613,7 @@ class PlaceClient:
                     new_rgb_hex = self.rgb_to_hex(new_rgb)
                     pixel_color_index = color_map[new_rgb_hex]
 
-                    logger.info("\nAccount Placing: ", name, "\n")
+                    logger.info("Account Placing: {}", name)
 
                     # draw the pixel onto r/place
                     # There's a better way to do this
@@ -677,7 +677,7 @@ def main(debug: bool, config: str):
     if not debug:
         # default loguru level is DEBUG
         logger.remove()
-        logger.add(sys.stderr, level="INFO")
+        logger.add(sys.stderr, level="INFO", format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> <level>{level}</level> - <level>{message}</level>")
 
     client = PlaceClient(config_path=config)
     # Start everything
