@@ -63,8 +63,8 @@ class PlaceClient:
         self.image_hash = None
 
         # Initialize-functions
-        self.update_image() # Download the new version
-        self.load_image() # Load the image
+        self.update_image()  # Download the new version
+        self.load_image()  # Load the image
 
     """ Utils """
     # Convert rgb tuple to hexadecimal string
@@ -138,7 +138,7 @@ class PlaceClient:
             logging.warn("Failed to update bot source image")
             # Returning if the response fails
             return False
-        
+
         with open(self.image_path, "wb") as f:
             shutil.copyfileobj(remote_image_req.raw, f)
 
