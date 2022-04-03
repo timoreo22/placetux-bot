@@ -580,10 +580,11 @@ class PlaceClient:
 
                     if r.status_code != HTTPStatus.OK.value:
                         # password is probably invalid
-                        logger.exception("Authorization failed!")
+                        logger.error("Authorization failed! for user: {}", name)
                         return
                     else:
                         logger.success("Authorization successful!")
+
                     logger.debug("Obtaining access token...")
                     r = client.get("https://new.reddit.com/")
                     data_str = (
@@ -595,7 +596,7 @@ class PlaceClient:
                     response_data = data["user"]["session"]
 
                     if "error" in response_data:
-                        logger.exception(
+                        logger.error(
                             "An error occured. Make sure you have the correct credentials. Response data: {}",
                             response_data,
                         )
