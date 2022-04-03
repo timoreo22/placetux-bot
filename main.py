@@ -639,8 +639,7 @@ class PlaceClient:
                     # get converted color
                     new_rgb_hex = ColorMapper.rgb_to_hex(new_rgb)
                     pixel_color_index = ColorMapper.COLOR_MAP[new_rgb_hex]
-
-                    logger.info("Account Placing: {}", name)
+                    logger.info("Thread #{} : Account Placing: {}", index, name)
 
                     # draw the pixel onto r/place
                     # There's a better way to do this
