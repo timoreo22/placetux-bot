@@ -17,6 +17,7 @@ This is a script to draw the offical TUX onto r/place (<https://www.reddit.com/r
 - Easy(ish) to read output with colors
 - SOCKS proxy support
 - No client id and secret needed
+- Proxies from "proxies.txt" file
 
 ## Requirements
 
@@ -25,6 +26,9 @@ This is a script to draw the offical TUX onto r/place (<https://www.reddit.com/r
 ## MacOSX
 If you are using MacOSX and encounter an SSL_CERTIFICATE error. Please apply the fix detailed https://stackoverflow.com/questions/42098126/mac-osx-python-ssl-sslerror-ssl-certificate-verify-failed-certificate-verify  
 
+If you want to use tor on MacOSX. you'll need to provide your own tor binary and start it manually. deactivate the "use_builtin tor"
+option in the config and make sure you configure your tor to use the specified ports and password. 
+<br>*note that socks proxy connection to tor doesn't work for the time being, so the config value is for an httpTunnel port*
 
 ## Get Started
 
@@ -75,7 +79,7 @@ Note: Multiple fields can be passed into the arrays to spawn a thread for each o
 start.bat or startverbose.bat
 ```
 
-### Other OS
+### Unix-like (Linux, MacOS etc.)
 
 ```shell
 chmod +x start.sh startverbose.sh
@@ -116,7 +120,7 @@ This is useful if you want different threads drawing different parts of the imag
 
 If any JSON decoders errors are found, the `config.json` needs a fix. Make sure to add the below 2 lines in the file.
 
-```text
+```json
 {
     "thread_delay": 2,
     "unverified_place_frequency": false,
@@ -132,6 +136,7 @@ If any JSON decoders errors are found, the `config.json` needs a fix. Make sure 
 
 - Transparency can be achieved by using the RGB value (69, 42, 0) in any part of your image
 - If you'd like, you can enable Verbose Mode by adding --verbose to "python main.py". This will output a lot more information, and not neccessarily in the right order, but it is useful for development and debugging.
+- You can also setup proxies by creating a "proxies" and have a new line for each proxie
 
 ## Docker
 

@@ -3,6 +3,7 @@
 import os
 import os.path
 import math
+
 import requests
 import json
 import time
@@ -17,7 +18,6 @@ from PIL import Image, UnidentifiedImageError
 from loguru import logger
 import click
 from bs4 import BeautifulSoup
-
 
 from src.mappings import ColorMapper
 
@@ -47,6 +47,10 @@ class PlaceClient:
             if "proxies" in self.json_data and self.json_data["proxies"] is not None
             else None
         )
+        if self.proxies is None and os.path.exists(
+            os.path.join(os.getcwd(), "proxies.txt")
+        ):
+            self.proxies = self.get_proxies_text()
         self.compactlogging = (
             self.json_data["compact_logging"]
             if "compact_logging" in self.json_data
@@ -83,10 +87,20 @@ class PlaceClient:
 
     """ Utils """
 
+    def get_proxies_text(self):
+        pathproxies = os.path.join(os.getcwd(), "proxies.txt")
+        f = open(pathproxies)
+        file = f.read()
+        f.close()
+        proxieslist = file.splitlines()
+        self.proxies = []
+        for i in proxieslist:
+            self.proxies.append({"https": i, "http": i})
+
     def GetProxies(self, proxies):
         proxieslist = []
         for i in proxies:
-            proxieslist.append({"https": i})
+            proxieslist.append({"https": i, "http": i})
         return proxieslist
 
     def GetRandomProxy(self):
@@ -375,18 +389,23 @@ class PlaceClient:
 
         ws.close()
 
-        # TODO: Multiply by canvas_details["canvasConfigurations"][i]["dx"] and canvas_details["canvasConfigurations"][i]["dy"] instead of hardcoding it
-        new_img_width = int(canvas_details["canvasWidth"]) * 2
+        new_img_width = (
+            max(map(lambda x: x["dx"], canvas_details["canvasConfigurations"]))
+            + canvas_details["canvasWidth"]
+        )
         logger.debug("New image width: {}", new_img_width)
-        new_img_height = int(canvas_details["canvasHeight"])
+        new_img_height = (
+            max(map(lambda x: x["dy"], canvas_details["canvasConfigurations"]))
+            + canvas_details["canvasHeight"]
+        )
         logger.debug("New image height: {}", new_img_height)
 
         new_img = Image.new("RGB", (new_img_width, new_img_height))
-        dx_offset = 0
         for idx, img in enumerate(sorted(imgs, key=lambda x: x[0])):
             logger.debug("Adding image (ID {}): {}", img[0], img[1])
             dx_offset = int(canvas_details["canvasConfigurations"][idx]["dx"])
-            new_img.paste(img[1], (dx_offset, 0))
+            dy_offset = int(canvas_details["canvasConfigurations"][idx]["dy"])
+            new_img.paste(img[1], (dx_offset, dy_offset))
 
         return new_img
 
@@ -502,8 +521,9 @@ class PlaceClient:
                 time_until_next_draw = next_pixel_placement_time - current_timestamp
 
                 if time_until_next_draw > 10000:
-                    logger.info(f"Thread #{index} :: CANCELLED :: Rate-Limit Banned")
-                    exit(1)
+                    logger.warning(f"Thread #{index} :: CANCELLED :: Rate-Limit Banned")
+                    repeat_forever = False
+                    break
 
                 new_update_str = (
                     str(time_until_next_draw) + " seconds until next pixel is drawn"
@@ -538,7 +558,6 @@ class PlaceClient:
                     try:
                         username = name
                         password = worker["password"]
-                        # note: use https://www.reddit.com/prefs/apps
                     except Exception:
                         logger.info(
                             "You need to provide all required fields to worker '{}'",
@@ -562,7 +581,7 @@ class PlaceClient:
                             data = {
                                 "username": username,
                                 "password": password,
-                                "dest": "https://www.reddit.com/",
+                                "dest": "https://new.reddit.com/",
                                 "csrf_token": csrf_token,
                             }
 
