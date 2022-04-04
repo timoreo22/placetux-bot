@@ -2,9 +2,8 @@
     "thread_delay": 10,
     "unverified_place_frequency": false,
     "compact_logging": true,
-    "coords_url": "https://r-placetux.github.io/place_tux/bot/priority_coords.txt",
-    "image_url": "https://r-placetux.github.io/place_tux/bot/priority_image.png",
-    "image_hash_url": "https://r-placetux.github.io/place_tux/bot/bot_hash",
+    "image_url": "https://r-placetux.github.io/place_tux/priority",
+    "image_hash_url": "https://r-placetux.github.io/place_tux/bot_hash",
     "workers": {
         "worker1username": {
             "password": "password",

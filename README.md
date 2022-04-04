@@ -41,11 +41,11 @@ Note: Please use https://jsonlint.com/ to check that your JSON file is correctly
 ```json
 {
   //Where the image's path is
-  "image_path":"image.png",
-  // [x,y] where you want the top left pixel of the local image to be drawn on canvas
-  "image_start_coords": [20, 679],
+  "image_url": "https://r-placetux.github.io/place_tux/priority",
+  //The hash of the latest update
+  "image_hash_url": "https://r-placetux.github.io/place_tux/bot_hash",
   // delay between starting threads (can be 0)
-  "thread_delay": 2,
+  "thread_delay": 10,
   // array of accounts to use
   "workers": {
     // username of account 1
@@ -97,7 +97,8 @@ Just create multiple child arrays to "workers" in the .json
 
 ```json
 {
-  "image_start_coords": [20, 679],
+  "image_url": "https://r-placetux.github.io/place_tux/priority",
+  "image_hash_url": "https://r-placetux.github.io/place_tux/bot_hash",
   "thread_delay": 2,
 
   "workers": {
