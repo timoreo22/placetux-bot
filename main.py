@@ -82,7 +82,11 @@ class PlaceClient:
         
         self.images = self.json_data["images"]
         
-        self.image_paths = {x: os.path.join(os.path.abspath(os.getcwd()), x + ".png") for x in self.images.keys()}
+        self.image_base_path = os.path.join(os.path.abspath(os.getcwd())+"/images")
+        if not os.path.isdir(self.image_base_path):
+            os.mkdir(self.image_base_path)
+        
+        self.image_paths = {x: os.path.join(self.image_base_path, x + ".png") for x in self.images.keys()}
 
 
         
@@ -250,7 +254,6 @@ class PlaceClient:
             self.pixel_x_start[name] = None
             self.pixel_y_start[name] = None
 
-            print(image_name)
             for data in remote_position_req.json():
                 if data["img_url"] == image_name:
 
@@ -262,8 +265,6 @@ class PlaceClient:
                         image_name,
                     )
                     break
-                
-        print("POS: ", self.pixel_x_start)
         
         # If we end up here we didn't update the x and y start!
         return True
