@@ -173,9 +173,12 @@ class PlaceClient:
                 )
                 return (False, None, None, None)
 
-            image_url = remote_priority_req.content
+            image_url = remote_priority_req.text
+            if image_url.endswith("\n"):
+                image_url = image_url[0 : len(image_url) - 1]
+
             logger.debug(
-                "Recieved remote priority target: {}", remote_priority_req.content
+                "Recieved remote priority target: {}", remote_priority_req.text
             )
             last_index = image_url.rfind("/")
             image_name = image_url[last_index + 1 : len(image_url)]
