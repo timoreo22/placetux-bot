@@ -81,7 +81,9 @@ class PlaceClient:
         self.pixel_y_start = None
 
         # Initialize-functions
-        self.update_image_config()  # Download the new version
+        if not self.update_image_config():
+            # Config could not be fetched
+            exit(1)# Download the new version
         self.load_image()  # Load the image
 
         self.waiting_thread_index = -1
