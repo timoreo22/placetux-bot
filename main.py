@@ -26,8 +26,14 @@ class PlaceClient:
     def __init__(self, config_path):
         # Data
         self.json_data = self.get_json_data(config_path)
-        self.pixel_x_start: int = self.json_data["image_start_coords"][0]
-        self.pixel_y_start: int = self.json_data["image_start_coords"][1]
+        pixels = (
+            self.json_data["image_start_coords"]
+            if "image_start_coords" in self.json_data
+            else None
+        )
+        if pixels is not None:
+            self.pixel_x_start = {"image": self.json_data["image_start_coords"][0]}
+            self.pixel_y_start = {"image": self.json_data["image_start_coords"][1]}
 
         # In seconds
         self.delay_between_launches = (
@@ -71,12 +77,32 @@ class PlaceClient:
         self.first_run_counter = 0
 
         # Setting some values from config
-        self.image_url = self.json_data["image_url"]
-        self.image_hash_url = self.json_data["image_hash_url"]
-
-        # Setting the local path for the image
-        self.image_path = os.path.join(os.path.abspath(os.getcwd()), "image.png")
-
+        self.image_url = (
+            self.json_data["image_url"]
+            if "image_url" in self.json_data
+            else None
+        )
+        self.image_hash_url = (
+            self.json_data["image_hash_url"]
+            if "image_hash_url" in self.json_data
+            else None
+        )
+        self.images = (
+            self.json_data["images"]
+            if "images" in self.json_data
+            and self.json_data["images"] is not None
+            else {}
+        )
+        if len(self.images) == 0:
+            # Setting the local path for the image
+            self.image_links = {self.image_url: os.path.join(os.path.abspath(os.getcwd()), "image.png")}
+            self.image_paths = {"image": os.path.join(os.path.abspath(os.getcwd()), "image.png")}
+        else:
+            self.image_links = {y["url"]: os.path.join(os.path.abspath(os.getcwd()), x + ".png")
+                                for x, y in self.images.items()}
+            self.image_paths = {x: os.path.join(os.path.abspath(os.getcwd()), x + ".png") for x in self.images.keys()}
+            self.pixel_x_start = {x: y["image_start_coords"][0] for x, y in self.images.items()}
+            self.pixel_y_start = {x: y["image_start_coords"][1] for x, y in self.images.items()}
         self.image_hash = None
 
         # Initialize-functions
@@ -145,47 +171,46 @@ class PlaceClient:
 
     def update_image(self) -> bool:
         logger.info("Starting an image update")
-
         remote_hash_req = requests.get(self.image_hash_url)
         remote_hash = remote_hash_req.content
 
-        remote_image_req = requests.get(self.image_url, stream=True)
+        for url, path in self.image_links.items():
+            remote_image_req = requests.get(url, stream=True)
 
-        if remote_image_req.status_code != 200:
-            logger.warning("Failed to update bot source image")
-            # Returning if the response fails
-            return False
+            if remote_image_req.status_code != 200:
+                logger.warning("Failed to update bot source image")
+                # Returning if the response fails
+                return False
 
-        with open(self.image_path, "wb") as f:
-            shutil.copyfileobj(remote_image_req.raw, f)
-
-        logger.info("Bot source image updated")
-
+            with open(path, "wb") as f:
+                shutil.copyfileobj(remote_image_req.raw, f)
         # Updating the hash so the auto updater doesn't get confused
         self.image_hash = remote_hash
+        logger.info("Bot source images updated")
         return True
 
     def load_image(self):
         # Read and load the image to draw and get its dimensions
-        try:
-            im = Image.open(self.image_path)
-        except FileNotFoundError:
-            logger.exception("Failed to load image")
-            exit()
-        except UnidentifiedImageError:
-            logger.fatal("File found, but couldn't identify image format")
-            logger.exception("File found, but couldn't identify image format")
+        self.pix = {}
+        self.image_size = {}
+        for name,path in self.image_paths.items():
+            try:
+                im = Image.open(path)
+            except FileNotFoundError:
+                logger.exception("Failed to load image")
+                exit()
+            except UnidentifiedImageError:
+                logger.exception("File found, but couldn't identify image format")
 
-        # Convert all images to RGBA - Transparency should only be supported with PNG
-        if im.mode != "RGBA":
-            im = im.convert("RGBA")
-            logger.info("Converted to rgba")
-        self.pix = im.load()
+            # Convert all images to RGBA - Transparency should only be supported with PNG
+            if im.mode != "RGBA":
+                im = im.convert("RGBA")
+                logger.info("Converted to rgba")
+            self.pix[name] = im.load()
 
-        logger.info("Loaded image size: {}", im.size)
+            logger.info("Loaded image size: {}", im.size)
 
-        self.image_size = im.size
-
+            self.image_size[name] = im.size
     """ Main """
     # Draw a pixel at an x, y coordinate in r/place with a specific color
 
@@ -422,7 +447,7 @@ class PlaceClient:
 
         return new_img
 
-    def get_unset_pixel(self, x, y, index):
+    def get_unset_pixel(self, x, y, index, name):
         originalX = x
         originalY = y
         loopedOnce = False
@@ -443,11 +468,11 @@ class PlaceClient:
                 wasWaiting = False
                 time.sleep(index * self.delay_between_launches)
 
-            if x >= self.image_size[0]:
+            if x >= self.image_size[name][0]:
                 y += 1
                 x = 0
 
-            if y >= self.image_size[1]:
+            if y >= self.image_size[name][1]:
 
                 y = 0
 
@@ -465,19 +490,19 @@ class PlaceClient:
                 pix2 = boardimg.convert("RGB").load()
                 imgOutdated = False
 
-            logger.debug("{}, {}", x + self.pixel_x_start, y + self.pixel_y_start)
+            logger.debug("{}, {}", x + self.pixel_x_start[name], y + self.pixel_y_start[name])
             logger.debug(
-                "{}, {}, boardimg, {}, {}", x, y, self.image_size[0], self.image_size[1]
+                "{}, {}, boardimg, {}, {}", x, y, self.image_size[name][0], self.image_size[name][1]
             )
 
-            target_rgb = self.pix[x, y][:3]
-            is_transparent = self.pix[x, y][3] == 0
+            target_rgb = self.pix[name][x, y][:3]
+            is_transparent = self.pix[name][x, y][3] == 0
 
             new_rgb = ColorMapper.closest_color(target_rgb, self.rgb_colors_array)
-            if pix2[x + self.pixel_x_start, y + self.pixel_y_start] != new_rgb:
+            if pix2[x + self.pixel_x_start[name], y + self.pixel_y_start[name]] != new_rgb:
                 logger.debug(
                     "{}, {}, {}, {}",
-                    pix2[x + self.pixel_x_start, y + self.pixel_y_start],
+                    pix2[x + self.pixel_x_start[name], y + self.pixel_y_start[name]],
                     new_rgb,
                     is_transparent,
                     pix2[x, y] != new_rgb,
@@ -486,9 +511,9 @@ class PlaceClient:
                     logger.debug(
                         "Thread #{} : Replacing {} pixel at: {},{} with {} color",
                         index,
-                        pix2[x + self.pixel_x_start, y + self.pixel_y_start],
-                        x + self.pixel_x_start,
-                        y + self.pixel_y_start,
+                        pix2[x + self.pixel_x_start[name], y + self.pixel_y_start[name]],
+                        x + self.pixel_x_start[name],
+                        y + self.pixel_y_start[name],
                         new_rgb,
                     )
                     break
@@ -521,7 +546,7 @@ class PlaceClient:
 
             # Time until next pixel is drawn
             update_str = ""
-
+            imgname = worker["image"] if "image" in worker else "image"
             # Refresh auth tokens and / or draw a pixel
             while True:
                 # reduce CPU usage
@@ -671,6 +696,7 @@ class PlaceClient:
                         current_r,
                         current_c,
                         index,
+                        imgname
                     )
 
                     # get converted color
@@ -681,8 +707,8 @@ class PlaceClient:
                     # draw the pixel onto r/place
                     # There's a better way to do this
                     canvas = 0
-                    pixel_x_start = self.pixel_x_start + current_r
-                    pixel_y_start = self.pixel_y_start + current_c
+                    pixel_x_start = self.pixel_x_start[imgname] + current_r
+                    pixel_y_start = self.pixel_y_start[imgname] + current_c
                     while pixel_x_start > 999:
                         pixel_x_start -= 1000
                         canvas += 1
@@ -703,12 +729,12 @@ class PlaceClient:
                     current_r += 1
 
                     # go back to first column when reached end of a row while drawing
-                    if current_r >= self.image_size[0]:
+                    if current_r >= self.image_size[imgname][0]:
                         current_r = 0
                         current_c += 1
 
                     # exit when all pixels drawn
-                    if current_c >= self.image_size[1]:
+                    if current_c >= self.image_size[imgname][1]:
                         logger.info("Thread #{} :: image completed", index)
                         break
 
