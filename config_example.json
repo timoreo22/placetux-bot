@@ -6,7 +6,8 @@
     "images": {
         "tux":"https://r-placetux.github.io/place_tux/artwork/tux/",
         "mit":"https://r-placetux.github.io/place_tux/artwork/allies/",
-        "prio":"https://r-placetux.github.io/place_tux/priority"
+        "prio":"https://r-placetux.github.io/place_tux/priority",
+        "tux_button": "https://r-placetux.github.io/place_tux/artwork/tux_button/"
     },
     "workers": {
         "worker1username": {
