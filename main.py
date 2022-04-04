@@ -156,7 +156,7 @@ class PlaceClient:
         if self.image_url.endswith(".png"):
             image_url = self.image_url
             last_index = image_url.rfind("/")
-            image_name = image_url[last_index:len(image_url)]
+            image_name = image_url[last_index+1:len(image_url)]
             position_url = image_url[0:last_index] + "/positions.json"
             logger.debug("Determinded that position url is: {} for {}", position_url, image_name)
             return (True, image_url, position_url, image_url[last_index+1:len(image_url)])
@@ -220,13 +220,14 @@ class PlaceClient:
         self.pixel_y_start = None
         
         for data in remote_position_req.json():
-            print("data", data, "name: ", image_name)
-            name = data["img_url"]
-            if name == image_name:
+            if data["img_url"] == image_name:
                 self.pixel_x_start = data["x0"]
                 self.pixel_y_start = data["y0"]
+                logger.debug("Fetched remote position: {} for {}", (self.pixel_x_start, self.pixel_y_start), image_name)
+                return True
         
-        return True
+        # If we end up here we didn't update the x and y start!
+        return False
 
     def load_image(self):
         # Read and load the image to draw and get its dimensions
@@ -528,10 +529,10 @@ class PlaceClient:
                 pix2 = boardimg.convert("RGB").load()
                 imgOutdated = False
 
-            logger.debug("{}, {}", x + self.pixel_x_start, y + self.pixel_y_start)
-            logger.debug(
-                "{}, {}, boardimg, {}, {}", x, y, self.image_size[0], self.image_size[1]
-            )
+            # logger.debug("{}, {}", x + self.pixel_x_start, y + self.pixel_y_start)
+            # logger.debug(
+            #     "{}, {}, boardimg, {}, {}", x, y, self.image_size[0], self.image_size[1]
+            # )
 
             target_rgb = self.pix[x, y][:3]
             is_transparent = self.pix[x, y][3] == 0
