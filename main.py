@@ -3,9 +3,6 @@
 import os
 import os.path
 import math
-from tkinter import image_names
-from turtle import position
-from numpy import imag
 
 import requests
 import json
