@@ -210,9 +210,15 @@ class PlaceClient:
             logger.warning("Failed to update bot source image config")
 
             if remote_image_req.status_code != 200:
-                logger.debug("FAILED TO FETCH IMAGE: {}", image_url)
+                logger.debug(
+                    "Failed to fetch image: {} {}", image_url, remote_image_req
+                )
             if remote_image_req.status_code != 200:
-                logger.debug("FAILED TO FETCH COORDS: {}", remote_position_req)
+                logger.debug(
+                    "Failed to fetch positions file: {} {}",
+                    position_url,
+                    remote_position_req,
+                )
 
             # Returning if the response fails
             return False
@@ -220,7 +226,7 @@ class PlaceClient:
         with open(self.image_path, "wb") as f:
             shutil.copyfileobj(remote_image_req.raw, f)
 
-        logger.info("Bot source image updated")
+        logger.debug("Bot source image updated: {}", image_url)
 
         # Updating the hash so the auto updater doesn't get confused
         self.image_hash = remote_hash
