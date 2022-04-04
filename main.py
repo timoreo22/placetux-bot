@@ -3,6 +3,7 @@
 import os
 import os.path
 import math
+from urllib.request import url2pathname
 
 import requests
 import json
@@ -163,7 +164,7 @@ class PlaceClient:
     def get_resource_urls(self, url, name):
         image_url = None
         position_url = None
-
+        
         if url.endswith("/"):
             image_url = url + name + ".png"
             position_url = url + "positions.json"

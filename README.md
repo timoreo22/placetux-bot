@@ -112,18 +112,19 @@ Just create multiple child arrays to "workers" in the .json
 
 ```json
 {
-  "image_url": "https://r-placetux.github.io/place_tux/priority",
   "image_hash_url": "https://r-placetux.github.io/place_tux/bot_hash",
   "thread_delay": 2,
 
   "workers": {
     "worker1username": {
       "password": "password",
-      "start_coords": [0, 0]
+      "start_coords": [0, 0],
+      "image": "image"
     },
     "worker2username": {
       "password": "password",
-      "start_coords": [0, 50]
+      "start_coords": [0, 50],
+      "image": "image"
     }
   }
 }

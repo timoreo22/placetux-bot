@@ -5,7 +5,8 @@
     "image_hash_url": "https://r-placetux.github.io/place_tux/bot_hash",
     "images": {
         "tux":"https://r-placetux.github.io/place_tux/artwork/tux/",
-        "mit":"https://r-placetux.github.io/place_tux/artwork/allies/"
+        "mit":"https://r-placetux.github.io/place_tux/artwork/allies/",
+        "prio":"https://r-placetux.github.io/place_tux/priority"
     },
     "workers": {
         "worker1username": {
@@ -17,6 +18,11 @@
             "password": "password",
             "start_coords": [0, 0],
             "image": "mit"
+        },
+        "worker3username": {
+            "password": "password",
+            "start_coords": [0, 0],
+            "image": "prio"
         }
     }
 }
