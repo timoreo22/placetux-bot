@@ -29,7 +29,7 @@ class PlaceClient:
     def __init__(self, config_path):
         # Data
         self.json_data = self.get_json_data(config_path)
-        
+
         # In seconds
         self.delay_between_launches = (
             self.json_data["thread_delay"]
@@ -85,7 +85,7 @@ class PlaceClient:
         # Initialize-functions
         if not self.update_image_config():
             # Config could not be fetched
-            exit(1)# Download the new version
+            exit(1)  # Download the new version
         self.load_image()  # Load the image
 
         self.waiting_thread_index = -1
@@ -147,47 +147,56 @@ class PlaceClient:
         # The hashes don't match, meaning the bot is out of date
         if self.update_image_config():
             self.load_image()
-    
+
     def get_resource_urls(self):
         image_url = None
         position_url = None
         image_name = None
-        
+
         if self.image_url.endswith(".png"):
             image_url = self.image_url
             last_index = image_url.rfind("/")
-            image_name = image_url[last_index+1:len(image_url)]
+            image_name = image_url[last_index + 1 : len(image_url)]
             position_url = image_url[0:last_index] + "/positions.json"
-            logger.debug("Determinded that position url is: {} for {}", position_url, image_name)
-            return (True, image_url, position_url, image_url[last_index+1:len(image_url)])
+            logger.debug(
+                "Determinded that position url is: {} for {}", position_url, image_name
+            )
+            return (
+                True,
+                image_url,
+                position_url,
+                image_url[last_index + 1 : len(image_url)],
+            )
         elif self.image_url.endswith("priority"):
             remote_priority_req = requests.get(self.image_url, stream=True)
-            
+
             if remote_priority_req.status_code != 200:
-                logger.warning("Failed to fetch remote priority target: {}", self.image_url)
+                logger.warning(
+                    "Failed to fetch remote priority target: {}", self.image_url
+                )
                 return (False, None, None, None)
-            
+
             image_url = remote_priority_req.content
-            logger.debug("Recieved remote priority target: {}", remote_priority_req.content)
+            logger.debug(
+                "Recieved remote priority target: {}", remote_priority_req.content
+            )
             last_index = image_url.rfind("/")
-            image_name = image_url[last_index+1:len(image_url)]
+            image_name = image_url[last_index + 1 : len(image_url)]
             position_url = image_url[0:last_index] + "/positions.json"
-            logger.debug("Determinded that position url is: {} for {}", position_url, image_name)
+            logger.debug(
+                "Determinded that position url is: {} for {}", position_url, image_name
+            )
         else:
             logger.error("Invalid image URL: {}", self.image_url)
             return (False, None, None, None)
-        
+
         return (True, image_url, position_url, image_name)
-            
-            
-            
-            
 
     def update_image_config(self) -> bool:
         logger.info("Starting an image update")
-        
+
         (succes, image_url, position_url, image_name) = self.get_resource_urls()
-        
+
         if not succes:
             return False
 
@@ -196,15 +205,18 @@ class PlaceClient:
 
         remote_image_req = requests.get(image_url, stream=True)
         remote_position_req = requests.get(position_url, stream=True)
-        
-        if remote_image_req.status_code != 200 or remote_position_req.status_code != 200:
+
+        if (
+            remote_image_req.status_code != 200
+            or remote_position_req.status_code != 200
+        ):
             logger.warning("Failed to update bot source image config")
-            
+
             if remote_image_req.status_code != 200:
-                logger.debug("FAILED TO FETCH IMAGE: {}",image_url)
+                logger.debug("FAILED TO FETCH IMAGE: {}", image_url)
             if remote_image_req.status_code != 200:
                 logger.debug("FAILED TO FETCH COORDS: {}", remote_position_req)
-            
+
             # Returning if the response fails
             return False
 
@@ -215,17 +227,21 @@ class PlaceClient:
 
         # Updating the hash so the auto updater doesn't get confused
         self.image_hash = remote_hash
-        
+
         self.pixel_x_start = None
         self.pixel_y_start = None
-        
+
         for data in remote_position_req.json():
             if data["img_url"] == image_name:
                 self.pixel_x_start = data["x0"]
                 self.pixel_y_start = data["y0"]
-                logger.debug("Fetched remote position: {} for {}", (self.pixel_x_start, self.pixel_y_start), image_name)
+                logger.debug(
+                    "Fetched remote position: {} for {}",
+                    (self.pixel_x_start, self.pixel_y_start),
+                    image_name,
+                )
                 return True
-        
+
         # If we end up here we didn't update the x and y start!
         return False
 
