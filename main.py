@@ -572,8 +572,8 @@ class PlaceClient:
                         boardimg = self.get_board(self.access_tokens[index])
                         break
                     except Exception as e:
-                        print(e)
-                        print("Error detected ! retrying in 30 seconds")
+                        logger.debug("Thread #{} : {}", index, e)
+                        logger.error("Thread #{} : Error detected while fetching board! retrying in 30 seconds", index)
                         time.sleep(30)
                 pix2 = boardimg.convert("RGB").load()
                 imgOutdated = False
