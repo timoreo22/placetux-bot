@@ -3,6 +3,7 @@
 import os
 import os.path
 import math
+from urllib.request import url2pathname
 
 import requests
 import json
@@ -26,14 +27,12 @@ class PlaceClient:
     def __init__(self, config_path):
         # Data
         self.json_data = self.get_json_data(config_path)
-        pixels = (
-            self.json_data["image_start_coords"]
-            if "image_start_coords" in self.json_data
-            else None
-        )
-        if pixels is not None:
-            self.pixel_x_start = {"image": self.json_data["image_start_coords"][0]}
-            self.pixel_y_start = {"image": self.json_data["image_start_coords"][1]}
+
+        if "image_start_coords" in self.json_data or "image_url" in self.json_data:
+            logger.error(
+                'You seem to have an old config.json file! Please update accourding to the README.md or config_example.json'
+            )
+            exit(1)
 
         # In seconds
         self.delay_between_launches = (
@@ -63,7 +62,13 @@ class PlaceClient:
             and self.json_data["compact_logging"] is not None
             else True
         )
-
+        
+        self.image_hash_url = (
+            self.json_data["image_hash_url"]
+            if "image_hash_url" in self.json_data
+            else None
+        )
+        
         # Color palette
         self.rgb_colors_array = ColorMapper.generate_rgb_colors_array()
 
@@ -72,41 +77,28 @@ class PlaceClient:
         self.access_token_expires_at_timestamp = {}
 
         # Image information
-        self.pix = None
+        self.pix = {}
         self.image_size = None
         self.first_run_counter = 0
+        
+        self.images = self.json_data["images"]
+        
+        self.image_base_path = os.path.join(os.path.abspath(os.getcwd())+"/images")
+        if not os.path.isdir(self.image_base_path):
+            os.mkdir(self.image_base_path)
+        
+        self.image_paths = {x: os.path.join(self.image_base_path, x + ".png") for x in self.images.keys()}
 
-        # Setting some values from config
-        self.image_url = (
-            self.json_data["image_url"]
-            if "image_url" in self.json_data
-            else None
-        )
-        self.image_hash_url = (
-            self.json_data["image_hash_url"]
-            if "image_hash_url" in self.json_data
-            else None
-        )
-        self.images = (
-            self.json_data["images"]
-            if "images" in self.json_data
-            and self.json_data["images"] is not None
-            else {}
-        )
-        if len(self.images) == 0:
-            # Setting the local path for the image
-            self.image_links = {self.image_url: os.path.join(os.path.abspath(os.getcwd()), "image.png")}
-            self.image_paths = {"image": os.path.join(os.path.abspath(os.getcwd()), "image.png")}
-        else:
-            self.image_links = {y["url"]: os.path.join(os.path.abspath(os.getcwd()), x + ".png")
-                                for x, y in self.images.items()}
-            self.image_paths = {x: os.path.join(os.path.abspath(os.getcwd()), x + ".png") for x in self.images.keys()}
-            self.pixel_x_start = {x: y["image_start_coords"][0] for x, y in self.images.items()}
-            self.pixel_y_start = {x: y["image_start_coords"][1] for x, y in self.images.items()}
+
+        
         self.image_hash = None
+        self.pixel_x_start = {}
+        self.pixel_y_start = {}
 
         # Initialize-functions
-        self.update_image()  # Download the new version
+        if not self.update_image_config():
+            # Config could not be fetched
+            exit(1)  # Download the new version
         self.load_image()  # Load the image
 
         self.waiting_thread_index = -1
@@ -166,34 +158,123 @@ class PlaceClient:
         logger.info("The bot source image is out of date, updating!")
 
         # The hashes don't match, meaning the bot is out of date
-        if self.update_image():
+        if self.update_image_config():
             self.load_image()
 
-    def update_image(self) -> bool:
+    def get_resource_urls(self, url, name):
+        image_url = None
+        position_url = None
+        
+        if url.endswith("/"):
+            image_url = url + name + ".png"
+            position_url = url + "positions.json"
+            logger.debug(
+                "Determinded that position url is: {} for {}", position_url, name
+            )
+            return (
+                True,
+                image_url,
+                position_url,
+                name+".png",
+            )
+        elif url.endswith("priority"):
+            remote_priority_req = requests.get(url, stream=True)
+
+            if remote_priority_req.status_code != 200:
+                logger.warning(
+                    "Failed to fetch remote priority target: {}", url
+                )
+                return (False, None, None, None)
+
+            image_url = remote_priority_req.text
+            if image_url.endswith("\n"):
+                image_url = image_url[0 : len(image_url) - 1]
+
+            logger.debug(
+                "Recieved remote priority target: {}", remote_priority_req.text
+            )
+            last_index = image_url.rfind("/")
+            image_name = image_url[last_index + 1 : len(image_url)]
+            position_url = image_url[0:last_index] + "/positions.json"
+            logger.debug(
+                "Determinded that position url is: {} for {}", position_url, image_name
+            )
+        else:
+            logger.error("Invalid image URL: {}", url)
+            return (False, None, None, None)
+
+        return (True, image_url, position_url, image_name)
+
+    def update_image_config(self):
         logger.info("Starting an image update")
+
         remote_hash_req = requests.get(self.image_hash_url)
         remote_hash = remote_hash_req.content
+        
+        
+        self.image_hash = remote_hash
 
-        for url, path in self.image_links.items():
-            remote_image_req = requests.get(url, stream=True)
+        logger.debug("IMAGES: {}", self.images)
+        for name, url in self.images.items():
+            (succes, image_url, position_url, image_name) = self.get_resource_urls(url, name)
 
-            if remote_image_req.status_code != 200:
-                logger.warning("Failed to update bot source image")
+            if not succes:
+                return False
+
+            self.image_hash = remote_hash
+
+            remote_image_req = requests.get(image_url, stream=True)
+            remote_position_req = requests.get(position_url, stream=True)
+
+            if (
+                remote_image_req.status_code != 200
+                or remote_position_req.status_code != 200
+            ):
+                logger.warning("Failed to update bot source image config")
+
+                if remote_image_req.status_code != 200:
+                    logger.debug(
+                        "Failed to fetch image: {} {}", image_url, remote_image_req
+                    )
+                if remote_image_req.status_code != 200:
+                    logger.debug(
+                        "Failed to fetch positions file: {} {}",
+                        position_url,
+                        remote_position_req,
+                    )
+
                 # Returning if the response fails
                 return False
 
-            with open(path, "wb") as f:
+            with open(self.image_paths[name], "wb") as f:
                 shutil.copyfileobj(remote_image_req.raw, f)
-        # Updating the hash so the auto updater doesn't get confused
-        self.image_hash = remote_hash
-        logger.info("Bot source images updated")
+                    
+            logger.debug("Bot source image updated: {}", image_url)
+                
+            # Updating the hash so the auto updater doesn't get confused
+            self.pixel_x_start[name] = None
+            self.pixel_y_start[name] = None
+
+            for data in remote_position_req.json():
+                if data["img_url"] == image_name:
+
+                    self.pixel_x_start[name] = data["x0"]
+                    self.pixel_y_start[name] = data["y0"]
+                    logger.debug(
+                        "Fetched remote position: {} for {}",
+                        (self.pixel_x_start[name], self.pixel_y_start[name]),
+                        image_name,
+                    )
+                    break
+        
+        # If we end up here we didn't update the x and y start!
         return True
 
     def load_image(self):
         # Read and load the image to draw and get its dimensions
         self.pix = {}
         self.image_size = {}
-        for name,path in self.image_paths.items():
+        for name, path in self.image_paths.items():
             try:
                 im = Image.open(path)
             except FileNotFoundError:
@@ -490,10 +571,10 @@ class PlaceClient:
                 pix2 = boardimg.convert("RGB").load()
                 imgOutdated = False
 
-            logger.debug("{}, {}", x + self.pixel_x_start[name], y + self.pixel_y_start[name])
-            logger.debug(
-                "{}, {}, boardimg, {}, {}", x, y, self.image_size[name][0], self.image_size[name][1]
-            )
+            # logger.debug("{}, {}", x + self.pixel_x_start, y + self.pixel_y_start)
+            # logger.debug(
+            #     "{}, {}, boardimg, {}, {}", x, y, self.image_size[0], self.image_size[1]
+            # )
 
             target_rgb = self.pix[name][x, y][:3]
             is_transparent = self.pix[name][x, y][3] == 0

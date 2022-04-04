@@ -4,10 +4,9 @@
     "compact_logging": true,
     "image_hash_url": "https://r-placetux.github.io/place_tux/bot_hash",
     "images": {
-        "tux":{
-            "url": "https://r-placetux.github.io/place_tux/tux_raw.png",
-            "image_start_coords": [20, 679]
-        }
+        "tux":"https://r-placetux.github.io/place_tux/artwork/tux/",
+        "mit":"https://r-placetux.github.io/place_tux/artwork/allies/",
+        "prio":"https://r-placetux.github.io/place_tux/priority"
     },
     "workers": {
         "worker1username": {
@@ -18,7 +17,12 @@
         "worker2username": {
             "password": "password",
             "start_coords": [0, 0],
-            "image": "tux"
+            "image": "mit"
+        },
+        "worker3username": {
+            "password": "password",
+            "start_coords": [0, 0],
+            "image": "prio"
         }
     }
 }
