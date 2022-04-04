@@ -27,6 +27,12 @@ class PlaceClient:
         # Data
         self.json_data = self.get_json_data(config_path)
 
+        if "image_start_coords" in self.json_data:
+            logger.error(
+                'You seem to have an old config.json file! Please remove "image_start_coords" and set your "image_url" accourding to the README.md'
+            )
+            exit(1)
+
         # In seconds
         self.delay_between_launches = (
             self.json_data["thread_delay"]
