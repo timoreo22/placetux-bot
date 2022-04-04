@@ -40,12 +40,16 @@ Note: Please use https://jsonlint.com/ to check that your JSON file is correctly
 
 ```json
 {
-  //Where the image's path is
-  "image_url": "https://r-placetux.github.io/place_tux/priority",
   //The hash of the latest update
   "image_hash_url": "https://r-placetux.github.io/place_tux/bot_hash",
   // delay between starting threads (can be 0)
   "thread_delay": 10,
+  //the images
+  "images": {
+    //add here images for the bots to use
+    "prio":"https://r-placetux.github.io/place_tux/priority"
+  },
+
   // array of accounts to use
   "workers": {
     // username of account 1
@@ -53,7 +57,9 @@ Note: Please use https://jsonlint.com/ to check that your JSON file is correctly
       // password of account 1
       "password": "password",
       // which pixel of the image to draw first
-      "start_coords": [0, 0]
+      "start_coords": [0, 0],
+      //the image this bot will build
+      "image": "prio"
     },
     // username of account 2
     "worker1username": {
@@ -61,6 +67,8 @@ Note: Please use https://jsonlint.com/ to check that your JSON file is correctly
       "password": "password",
       // which pixel of the image to draw first
       "start_coords": [0, 0]
+      //the image this bot will build
+      "image": "prio"
     }
     // etc... add as many accounts as you want (but reddit may detect you the more you add)
   }
