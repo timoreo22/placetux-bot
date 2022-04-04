@@ -93,18 +93,18 @@ chmod +x start.sh startverbose.sh
 `python3 main.py -d` or `python3 main.py --debug`
 
 
-## Configure the Image
+## Configure the Image(s)
 
-The bot supports all the art from [The Offical Art Repo](https://github.com/r-PlaceTux/place_tux/tree/main/artwork)!
-To use these images put https://r-placetux.github.io/place_tux/artwork/\<the_path_from_the_repo> in the config.json
-
-Examples:
-1. "image_url": "https://r-placetux.github.io/place_tux/artwork/allies/mit.png"
-2. "image_url": "https://r-placetux.github.io/place_tux/artwork/tux/tux.png"
-
-The bots can also follow the current prioritized art by using:
-> "image_url": "https://r-placetux.github.io/place_tux/priority"
-
+The bot supports all the art from [The Offical Art Repo](https://github.com/r-PlaceTux/place_tux/tree/main/artwork)! It also supports specieving for each worker a dedicated image to work on. Add images to the config.json as follows:
+```json
+    "images": {
+        "tux":"https://r-placetux.github.io/place_tux/artwork/tux/",
+        "<image_name>":"https://r-placetux.github.io/place_tux/artwork/<dir>/",
+        //this is the priority image 
+        "prio":"https://r-placetux.github.io/place_tux/priority"
+    }
+```
+The image name and directory can be found in  [The Offical Art Repo](https://github.com/r-PlaceTux/place_tux/tree/main/artwork) 
 
 ## Multiple Workers
 
