@@ -567,7 +567,14 @@ class PlaceClient:
                 imgOutdated = True
 
             if imgOutdated:
-                boardimg = self.get_board(self.access_tokens[index])
+                while True:
+                    try:
+                        boardimg = self.get_board(self.access_tokens[index])
+                        break
+                    except Exception as e:
+                        print(e)
+                        print("Error detected ! retrying in 30 seconds")
+                        time.sleep(30)
                 pix2 = boardimg.convert("RGB").load()
                 imgOutdated = False
 
