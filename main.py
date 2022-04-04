@@ -26,9 +26,7 @@ class PlaceClient:
     def __init__(self, config_path):
         # Data
         self.json_data = self.get_json_data(config_path)
-        self.pixel_x_start: int = self.json_data["image_start_coords"][0]
-        self.pixel_y_start: int = self.json_data["image_start_coords"][1]
-
+        
         # In seconds
         self.delay_between_launches = (
             self.json_data["thread_delay"]
@@ -71,6 +69,7 @@ class PlaceClient:
         self.first_run_counter = 0
 
         # Setting some values from config
+        self.coords_url = self.json_data["coords_url"]
         self.image_url = self.json_data["image_url"]
         self.image_hash_url = self.json_data["image_hash_url"]
 
@@ -78,9 +77,11 @@ class PlaceClient:
         self.image_path = os.path.join(os.path.abspath(os.getcwd()), "image.png")
 
         self.image_hash = None
+        self.pixel_x_start = None
+        self.pixel_y_start = None
 
         # Initialize-functions
-        self.update_image()  # Download the new version
+        self.update_image_config()  # Download the new version
         self.load_image()  # Load the image
 
         self.waiting_thread_index = -1
@@ -140,19 +141,26 @@ class PlaceClient:
         logger.info("The bot source image is out of date, updating!")
 
         # The hashes don't match, meaning the bot is out of date
-        if self.update_image():
+        if self.update_image_config():
             self.load_image()
 
-    def update_image(self) -> bool:
+    def update_image_config(self) -> bool:
         logger.info("Starting an image update")
 
         remote_hash_req = requests.get(self.image_hash_url)
         remote_hash = remote_hash_req.content
 
         remote_image_req = requests.get(self.image_url, stream=True)
-
-        if remote_image_req.status_code != 200:
-            logger.warning("Failed to update bot source image")
+        remote_coord_req = requests.get(self.coords_url, stream=True)
+        
+        if remote_image_req.status_code != 200 or remote_coord_req.status_code != 200:
+            logger.warning("Failed to update bot source image config")
+            
+            if remote_image_req.status_code != 200:
+                logger.debug("FAILED TO FETCH IMAGE: {}",self.image_url)
+            if remote_image_req.status_code != 200:
+                logger.debug("FAILED TO FETCH COORDS: {}", self.coords_url)
+            
             # Returning if the response fails
             return False
 
@@ -163,6 +171,11 @@ class PlaceClient:
 
         # Updating the hash so the auto updater doesn't get confused
         self.image_hash = remote_hash
+        
+        print(remote_coord_req)
+        coords = [int(a) for a in remote_coord_req.content.split(",")]
+        self.pixel_x_start = coords[0]
+        self.pixel_y_start = coords[1]
         return True
 
     def load_image(self):
