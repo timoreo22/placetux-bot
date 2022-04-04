@@ -92,6 +92,20 @@ chmod +x start.sh startverbose.sh
 
 `python3 main.py -d` or `python3 main.py --debug`
 
+
+## Configure the Image
+
+The bot supports all the art from [The Offical Art Repo](https://github.com/r-PlaceTux/place_tux/tree/main/artwork)!
+To use these images put https://r-placetux.github.io/place_tux/artwork/\<the_path_from_the_repo> in the config.json
+
+Examples:
+1. "image_url": "https://r-placetux.github.io/place_tux/artwork/allies/mit.png"
+2. "image_url": "https://r-placetux.github.io/place_tux/artwork/tux/tux.png"
+
+The bots can also follow the current prioritized art by using:
+> "image_url": "https://r-placetux.github.io/place_tux/priority"
+
+
 ## Multiple Workers
 
 Just create multiple child arrays to "workers" in the .json
@@ -118,20 +132,6 @@ Just create multiple child arrays to "workers" in the .json
 In this case, the first worker will start drawing from (0, 0) and the second worker will start drawing from (0, 50) from the input image.jpg file.
 
 This is useful if you want different threads drawing different parts of the image with different accounts.
-
-
-## Configure the Image
-
-The bot supports all the art from [The Offical Art Repo](https://github.com/r-PlaceTux/place_tux/tree/main/artwork)!
-To use these images put https://r-placetux.github.io/place_tux/artwork/\<the_path_from_the_repo>
-
-Examples:
-1. "image_url": "https://r-placetux.github.io/place_tux/artwork/allies/mit.png"
-2. "image_url": "https://r-placetux.github.io/place_tux/artwork/tux/tux.png"
-
-The bots can also follow the current prioritized art by using:
-> "image_url": "https://r-placetux.github.io/place_tux/priority"
-
 
 ## Other Settings
 
