@@ -71,6 +71,7 @@ Note: Please use https://jsonlint.com/ to check that your JSON file is correctly
 
 -  Multiple fields can be passed into the arrays to spawn a thread for each one.
 - If you use 2 factor authentication (2FA) in your account, then change "password" to "password:XXXXXX" where XXXXXX is your 2FA code.
+- Images are configurable but require a "positions.json" in the same directory as the image_url
 
 ## Run the Script
 
@@ -117,6 +118,20 @@ Just create multiple child arrays to "workers" in the .json
 In this case, the first worker will start drawing from (0, 0) and the second worker will start drawing from (0, 50) from the input image.jpg file.
 
 This is useful if you want different threads drawing different parts of the image with different accounts.
+
+
+## Configure the Image
+
+The bot supports all the art from [The Offical Art Repo](https://github.com/r-PlaceTux/place_tux/tree/main/artwork)!
+To use these images put https://r-placetux.github.io/place_tux/artwork/\<the_path_from_the_repo>
+
+Examples:
+1. "image_url": "https://r-placetux.github.io/place_tux/artwork/allies/mit.png"
+2. "image_url": "https://r-placetux.github.io/place_tux/artwork/tux/tux.png"
+
+The bots can also follow the current prioritized art by using:
+> "image_url": "https://r-placetux.github.io/place_tux/priority"
+
 
 ## Other Settings
 
