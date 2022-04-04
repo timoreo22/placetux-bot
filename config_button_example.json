@@ -1,0 +1,18 @@
+{
+    "image_start_coords": [568, 1971],
+    "thread_delay": 10,
+    "unverified_place_frequency": false,
+    "compact_logging": true,
+    "image_url": "https://raw.githubusercontent.com/r-PlaceTux/place_tux/main/artwork/tux_button/tux_button.png",
+    "image_hash_url": "https://r-placetux.github.io/place_tux/bot_hash",
+    "workers": {
+        "worker1username": {
+            "password": "password",
+            "start_coords": [0, 0]
+        },
+        "worker2username": {
+            "password": "password",
+            "start_coords": [0, 0]
+        }
+    }
+}
